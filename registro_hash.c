@@ -1,7 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-
 #define TAM 19
 
 struct pessoa
@@ -21,7 +20,6 @@ typedef struct
 	struct No *inicio;
 	int tam;
 }Lista;
-
 
 Lista *tabela[TAM];
 
@@ -70,16 +68,18 @@ struct pessoa ler_pessoa()
 {
 	struct pessoa x;
 	printf("Insira seu nome: ");
+	setbuf(stdin, NULL);
 	fgets(x.nome, 30, stdin);
+	setbuf(stdin, NULL);
 	printf("Insira seu CPF: ");
 	scanf("%d", &x.cpf);
 	return x;
 }
 
-void inserir(struct pessoa p, Lista *lista)
+void inserir(struct pessoa p2, Lista *lista)
 {
-	struct No *no = malloc(sizeof(no));
-	no->pessoa = p;
+	struct No *no = (struct No *)malloc(sizeof(struct No));
+	no->p = p2;
 
 	no->proximo = lista->inicio;
 	lista->inicio = no;
@@ -90,6 +90,7 @@ void inserir_tabela()
 {
 	struct pessoa pes = ler_pessoa();
 	int hash = funcao_hash(pes.nome);
+	printf("\n%d\n", hash);
 	inserir(pes, tabela[hash]);
 }
 
@@ -98,7 +99,7 @@ struct No *buscarNo(int cpf, struct No *inicio)
 {
 	while(inicio != NULL)
 	{
-		if(inicio->pessoa.cpf == cpf)
+		if(inicio->p.cpf == cpf)
 			return inicio;
 
 		else
@@ -113,7 +114,7 @@ struct pessoa *buscar_pessoa(char *busca, int CPF)
 	int hash = funcao_hash(busca);
 	struct No *no = buscarNo(CPF, tabela[hash]->inicio);
 	if(no)
-		return &no->pessoa;
+		return &no->p;
 	
 	else
 		return NULL;
@@ -130,7 +131,7 @@ void imprimir_lista(struct No *inicio)
 {
 	while(inicio != NULL)
 	{
-		imprimir_pessoa(inicio->pessoa);
+		imprimir_pessoa(inicio->p);
 	  inicio = inicio->proximo;
 	}
 }
@@ -149,6 +150,8 @@ void imprimir_tabela()
 
 int main()
 {
+	
+	//struct Lista **tabela = (struct Lista **)malloc(TAM*sizeof(struct Lista*));
 	int registro, op;
 	struct pessoa *p;
 
