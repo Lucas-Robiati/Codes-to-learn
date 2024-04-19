@@ -10,34 +10,6 @@ struct no
 };
 
 //======Funções========//
-/*
-struct no *Insert_recursivo(struct no *raiz, int valor)
-{
-	if(raiz == NULL)
-		{
-			struct no *new = malloc(sizeof(struct no));
-			new->num = valor;
-			new->dir = NULL;
-			new->esq = NULL;
-			new->pai = raiz;
-			return new;
-		}
-	
-	else
-		{
-			if(valor > raiz->num)
-				{
-					raiz->esq = Insert_recursivo(raiz->esq, valor);
-				}
-		
-			if(valor < raiz->num)
-				{
-					raiz->dir = Insert_recursivo(raiz->dir, valor);
-				}
-			return raiz;
-		}
-}
-*/
 
 void Insert(struct no **raiz, int valor)
 {
@@ -83,6 +55,27 @@ struct no *Busca_Recursiva(struct no* raiz, int valor)
 	
 	else
 		return NULL;
+}
+
+int Altura_Arvore(struct no *raiz)
+{
+	if(raiz == NULL)
+	{
+		return -1;
+	}
+	else
+	{
+		int tam_esq = Altura_Arvore(raiz->esq);
+		int tam_dir = Altura_Arvore(raiz->dir);
+		if(tam_dir > tam_esq)
+		{
+			return tam_dir + 1;
+		}
+		else
+		{
+			return tam_esq + 1;
+		}
+	}
 }
 
 struct no *Busca(struct no *raiz, int valor)
@@ -133,7 +126,7 @@ int main()
   int op, valor, busca;
 	
 do{
-	printf("\n\t0-Sair\n\t1-Inserir\n\t2-Imprimir\n\t3-Busca um valor\n");
+	printf("\n\t0-Sair\n\t1-Inserir\n\t2-Imprimir\n\t3-Busca um valor\n\t4-Tamanho da Arvore\n");
 	scanf("%d", &op);
 
 	switch(op)
@@ -162,6 +155,13 @@ do{
 			printf("\nvalor encontrado : %d \n", temp->num);
 		else	
 			puts("Este numero nao esta na arvore");
+		break;
+	
+	case 4:
+		int temp = Altura_Arvore(raiz);
+		printf("\nA arvore tem o tamanho de %d nós\n", temp);
+		break;
+
 	}
 }while(op != 0);
 
