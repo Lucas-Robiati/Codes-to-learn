@@ -61,6 +61,50 @@ void Insert(struct no **raiz, int valor)
 		}
 	}
 }
+//======busca======//
+
+struct no *Busca_Recursiva(struct no* raiz, int valor)
+{
+	if(raiz)
+	{
+		if(raiz->num == valor)
+		{
+			return raiz;
+		}
+		if(valor < raiz->num)
+		{
+			return Busca_Recursiva(raiz->esq, valor);
+		}
+		if(valor > raiz->num)
+		{
+			return Busca_Recursiva(raiz->dir, valor);
+		}
+	}
+	
+	else
+		return NULL;
+}
+
+struct no *Busca(struct no *raiz, int valor)
+{
+	while(raiz)
+	{
+		if(valor < raiz->num)
+		{
+			raiz = raiz->esq;
+		}
+		if(valor > raiz->num)
+		{
+			raiz = raiz->dir;
+		}
+		else
+		{
+			return raiz;
+		}
+	}
+return NULL;
+}
+
 //=======imprimir=======//
 
 void Imprime1(struct no *raiz)
@@ -85,11 +129,11 @@ void Imprime2(struct no *raiz)
 
 int main()
 {
-	struct no *raiz = NULL;
-  int op, valor;
-
+	struct no *temp ,*raiz = NULL;
+  int op, valor, busca;
+	
 do{
-	printf("\n0-Sair\n1-Inserir\n2-Imprimir\n");
+	printf("\n\t0-Sair\n\t1-Inserir\n\t2-Imprimir\n\t3-Busca um valor\n");
 	scanf("%d", &op);
 
 	switch(op)
@@ -108,6 +152,16 @@ do{
 		Imprime2(raiz);
 		printf("\n");
 		break;
+	
+	case 3:
+		puts("\nNumero a ser buscado\n");
+		scanf("%d", &busca);
+		//temp = Busca_Recursiva(raiz, busca);
+		temp = Busca(raiz, busca);
+		if(temp)
+			printf("\nvalor encontrado : %d \n", temp->num);
+		else	
+			puts("Este numero nao esta na arvore");
 	}
 }while(op != 0);
 
