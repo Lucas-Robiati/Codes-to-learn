@@ -271,7 +271,7 @@ BEGIN
     JOIN relacao_cidade AS residencia ON main.residencia_id = residencia.id
     JOIN relacao_cidade AS ocorrencia ON main.ocorrencia_id = ocorrencia.id;
     
-    RETURN QUERY SELECT * FROM desnormalize_v1; 
+    RETURN QUERY SELECT * FROM desnormalize_v1 limit 50; 
 END;
 $$ LANGUAGE plpgsql;
 
@@ -280,6 +280,6 @@ $$ LANGUAGE plpgsql;
 ---Chamada de funcoes-----
 SELECT Fn_Inicialize_bd();
 SELECT Fn_Normalize_bd();
-SELECT Fn_created_view_bd();
+SELECT * FROM Fn_created_view_bd();
 
 
