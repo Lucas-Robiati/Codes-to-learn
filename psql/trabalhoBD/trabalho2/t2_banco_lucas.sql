@@ -1,13 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+
+DROP TABLE IF EXISTS simulacao;
 DROP VIEW IF EXISTS desnormalize_v1; 
 DROP TABLE IF EXISTS main_table;
-DROP TABLE IF EXISTS escolaridade CASCADE;
-DROP TABLE IF EXISTS sexo CASCADE;
-DROP TABLE IF EXISTS co_causa_basica CASCADE;
-DROP TABLE IF EXISTS desc_causa_basica CASCADE;
-DROP TABLE IF EXISTS info CASCADE;
-DROP TABLE IF EXISTS relacao_cidade CASCADE;
 
 CREATE TABLE public.main_table
 (
@@ -30,32 +26,18 @@ CREATE TABLE public.main_table
 CREATE OR REPLACE FUNCTION Fn_Inicialize_bd()
 RETURNS void
 AS $$
---DECLARE  query varchar(500);
 BEGIN
     RAISE INFO 'Excluindo tabelas existentes'; 
-
-
-  /*CREATE TABLE public.main_table
-
-    (
-      dt_obito date NOT NULL,
-      dt_nascimento date,
-      nu_idade int,
-      sg_sexo varchar(10),
-      tp_raca_cor varchar(10),
-      tp_escolaridade varchar(25),
-      municipio_ibge_residencia varchar(50),
-      municipio_ibge_ocorrencia varchar(50),
-      co_cid_causa_basica varchar(5) NOT NULL,
-      desc_cid_causa_basica varchar(50) NOT NULL,
-      capitulo_cid_causa_basica varchar(60) NOT NULL,
-      categoria_cid_causa_basica varchar(50) NOT NULL
-    );
-    
-    query := '\copy main_table from ''/home/FatalPenguin/Codes-to-learn/psql/trabalhoBD/trabalho2/dados_cronicas_ses_2010.csv'' WITH DELIMITER '';'' CSV HEADER;'
-    EXECUTE query;*/ 
-
-    --COPY main_table FROM '/tmp/dados_dcronicas_ses_2010.csv' csv header delimiter ';' quote '"'; 
+   
+    DROP TABLE temp_nascimento;
+    DROP TABLE temp_obito;
+    DROP TABLE IF EXISTS escolaridade CASCADE;
+    DROP TABLE IF EXISTS sexo CASCADE;
+    DROP TABLE IF EXISTS co_causa_basica CASCADE;
+    DROP TABLE IF EXISTS desc_causa_basica CASCADE;
+    DROP TABLE IF EXISTS info CASCADE;
+    DROP TABLE IF EXISTS relacao_cidade CASCADE;
+   
     RAISE INFO 'Iniciando normalizacao da main table';
     
     DELETE FROM main_table WHERE nu_idade is NULL;
@@ -69,6 +51,9 @@ BEGIN
 
     UPDATE main_table SET tp_raca_cor ='Não Consta' WHERE tp_raca_cor is NULL;
     ALTER TABLE main_table ALTER COLUMN tp_raca_cor SET NOT NULL;
+   
+    UPDATE main_table SET sg_sexo ='Não Consta' WHERE sg_sexo is NULL;
+    ALTER TABLE main_table ALTER COLUMN sg_sexo SET NOT NULL;
 
     UPDATE main_table SET municipio_ibge_residencia ='Não Consta' WHERE municipio_ibge_residencia is NULL;
     ALTER TABLE main_table ALTER COLUMN municipio_ibge_residencia SET NOT NULL;
@@ -120,6 +105,9 @@ BEGIN
       id SERIAL PRIMARY KEY NOT NULL,
       cidade varchar(250)
     );
+
+    CREATE TEMPORARY TABLE temp_obito(dt_obito date);
+    CREATE TEMPORARY TABLE temp_nascimento(dt_nascimento date);
 
 ----tabela 1-----
     RAISE INFO 'CREATE TABLE escolaridade';
@@ -213,6 +201,11 @@ BEGIN
     RAISE INFO 'ENCRYPT COLUMN relacao_cidade';
     UPDATE relacao_cidade SET cidade = pgp_sym_encrypt(cidade, 'senha_forte_cidade');
 
+    INSERT INTO temp_obito SELECT DISTINCT dt_obito FROM main_table;
+    INSERT INTO temp_nascimento SELECT DISTINCT dt_nascimento FROM main_table 
+    WHERE date_part('year', dt_nascimento)::int%30 =0;
+
+
 -----DROP---
     ALTER TABLE main_table DROP COLUMN tp_escolaridade;
     ALTER TABLE main_table DROP COLUMN sg_sexo;
@@ -223,15 +216,6 @@ BEGIN
     ALTER TABLE main_table DROP COLUMN municipio_ibge_residencia;
     ALTER TABLE main_table DROP COLUMN municipio_ibge_ocorrencia;
 
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE FUNCTION Fn_calc_idade (obt date, nasc date) 
-RETURNS int
-AS $$
-BEGIN
-    RETURN EXTRACT (YEAR FROM AGE(obt, nasc));
 END;
 $$ LANGUAGE plpgsql;
 
@@ -275,11 +259,96 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----Funcoes Auxiliares------
 
+CREATE OR REPLACE FUNCTION Fn_calc_idade (obt date, nasc date) 
+RETURNS int
+AS $$
+BEGIN
+    RETURN EXTRACT (YEAR FROM AGE(obt, nasc));
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION Fn_Cidade_Aleatorio()
+RETURNS varchar(250)
+AS $$
+BEGIN
+    RETURN cidade FROM relacao_cidade ORDER BY RANDOM() LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION Fn_Data_obt_Aleatorio()
+RETURNS date
+AS $$
+BEGIN
+    RETURN dt_obito FROM temp_obito ORDER BY RANDOM() LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION Fn_Data_nasc_Aleatorio()
+RETURNS date
+AS $$
+BEGIN
+    RETURN dt_nascimento FROM temp_nascimento ORDER BY RANDOM() LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION Fn_sexo_Aleatorio()
+RETURNS varchar(10)
+AS $$
+BEGIN
+    RETURN sg_sexo FROM sexo ORDER BY RANDOM() LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
+
+----Simulacao-------
+ CREATE TABLE IF NOT EXISTS simulacao
+  (
+    dt_obito date,
+    dt_nascimento date,
+    nu_idade int,
+    sg_sexo varchar(10),
+    municipio_ibge_residencia varchar(250),
+    municipio_ibge_ocorrencia varchar(250)
+  );
+
+CREATE OR REPLACE FUNCTION Fn_simulacao_bd() 
+RETURNS void
+AS $$
+DECLARE
+    data_o date;
+    data_n date;
+BEGIN
+   
+  RAISE INFO 'CREATE TABLE simulacao';
+  FOR i IN 1..100000 LOOP
+      
+      data_o := Fn_Data_obt_Aleatorio();
+      data_n := Fn_Data_nasc_Aleatorio();
+
+      if i%1000=0 then raise info '%',i; end if;
+      INSERT INTO simulacao (dt_obito, dt_nascimento, nu_idade, sg_sexo, municipio_ibge_residencia, municipio_ibge_ocorrencia) 
+      SELECT data_o, data_n, Fn_calc_idade (data_o, data_n), Fn_sexo_Aleatorio(), Fn_Cidade_Aleatorio(), Fn_Cidade_Aleatorio();
+      
+  END LOOP;
+
+END;
+$$ LANGUAGE plpgsql;
 
 ---Chamada de funcoes-----
 SELECT Fn_Inicialize_bd();
 SELECT Fn_Normalize_bd();
 SELECT * FROM Fn_created_view_bd();
 
+----inicio da simulacao-----
 
+SELECT Fn_simulacao_bd();
+
+EXPLAIN ANALYSE SELECT * FROM simulacao WHERE sg_sexo = 'Feminino' AND nu_idade < 18;
+CREATE INDEX sexo_index ON simulacao(sg_sexo, nu_idade);
+EXPLAIN ANALYSE SELECT * FROM simulacao WHERE sg_sexo = 'Feminino' AND nu_idade < 18;
