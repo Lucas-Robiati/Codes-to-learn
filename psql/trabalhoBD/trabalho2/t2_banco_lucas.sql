@@ -29,8 +29,8 @@ AS $$
 BEGIN
     RAISE INFO 'Excluindo tabelas existentes'; 
    
-    DROP TABLE temp_nascimento;
-    DROP TABLE temp_obito;
+    DROP TABLE IF EXISTS temp_nascimento;
+    DROP TABLE IF EXISTS temp_obito;
     DROP TABLE IF EXISTS escolaridade CASCADE;
     DROP TABLE IF EXISTS sexo CASCADE;
     DROP TABLE IF EXISTS co_causa_basica CASCADE;
@@ -326,16 +326,24 @@ DECLARE
 BEGIN
    
   RAISE INFO 'CREATE TABLE simulacao';
-  FOR i IN 1..100000 LOOP
+  FOR i IN 1..10000 LOOP
       
       data_o := Fn_Data_obt_Aleatorio();
       data_n := Fn_Data_nasc_Aleatorio();
 
       if i%1000=0 then raise info '%',i; end if;
       INSERT INTO simulacao (dt_obito, dt_nascimento, nu_idade, sg_sexo, municipio_ibge_residencia, municipio_ibge_ocorrencia) 
-      SELECT data_o, data_n, Fn_calc_idade (data_o, data_n), Fn_sexo_Aleatorio(), Fn_Cidade_Aleatorio(), Fn_Cidade_Aleatorio();
-      
+      SELECT data_o, data_n,Fn_calc_idade(data_o, data_n), Fn_sexo_Aleatorio(), Fn_Cidade_Aleatorio(), Fn_Cidade_Aleatorio();
+       
   END LOOP;
+  
+  FOR i IN 1..9 LOOP
+    raise info '%',i;
+    INSERT INTO simulacao select dt_obito, dt_nascimento + (random()*365)::int,NULL::int, sg_sexo, municipio_ibge_residencia,municipio_ibge_ocorrencia 
+    from simulacao;
+  END LOOP;
+
+ -- UPDATE simulacao SET nu_idade=Fn_calc_idade(dt_obito, dt_nascimento);  
 
 END;
 $$ LANGUAGE plpgsql;
