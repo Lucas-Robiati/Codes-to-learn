@@ -1,6 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-
 DROP TABLE IF EXISTS simulacao;
 DROP VIEW IF EXISTS desnormalize_v1; 
 DROP TABLE IF EXISTS main_table;
