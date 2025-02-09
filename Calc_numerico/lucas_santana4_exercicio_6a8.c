@@ -86,36 +86,16 @@ int main()
 
     printf("\n: ");
     scanf("%d", &opt);
+    //1-x = 0.3927; 2-x = -0.85; 3-x = 0.5;
+    if(opt == 0) break;
+    printf("Entre com um valor para x: ");
+    scanf("%f", &x);
 
-    switch(opt)
-    {
-      case 1:
-        x = 0.3927;
-         
-        printf("\nValor para x: %.4f", x);
-        raiz = newtonraphson(x, precisao, opt);
-        printf("raiz = %g\n", raiz);
-        break;
+    printf("\nValor para x: %.4f", x);
+    raiz = newtonraphson(x, precisao, opt);
+    printf("raiz = %g\n", raiz);
+ 
 
-      case 2:
-        x = -0.85;
-
-        printf("\nValor para x: %.4f", x);
-        raiz = newtonraphson(x, precisao, opt);
-        printf("raiz = %g\n", raiz);
-        break;
-
-      case 3:
-        x = 0.5;
-
-        printf("\nValor para x: %.4f", x);
-        raiz = newtonraphson(x, precisao, opt);
-        printf("raiz = %g\n", raiz);
-        break;
-    
-      case 0:
-        break;
-    }
   }while(opt != 0);
   
   return 0;
